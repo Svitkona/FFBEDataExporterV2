@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "FFBE Sync v2",
+    "version": "1.0.0",
+    "description": "FFBE Sync in React",
+    "icons": {
+    },
+    "background": {
+      "service_worker": "./static/js/background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["./static/js/content.js"]
+      }
+    ],
+    "action": {
+      "default_popup": "index.html"
+    },
+    "host_permissions": [
+      "https://*.google.com/"
+    ],
+    "permissions": ["storage", "tabs", "identity"]
+  }
