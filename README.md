@@ -1,46 +1,24 @@
-# Getting Started with Create React App
+# FFBE Data Exporter v2
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This Chrome/Firefox extension is for exporting your data from FFBE.
 
-## Available Scripts
+### Building
 
-In the project directory, you can run:
+Install NodeJS. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension
 
-### `npm start`
+### Installing the extension
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Chrome:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Go to `chrome://extensions` and check "Developer mode" on the top right of the screen
+- Click `Load unpacked"
+- Navigate to and select the `build` directory
 
-### `npm test`
+Firefox:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Pack the contents of the `build` directory into a .zip file
+- Go to `about:addons`
+- Click `Extensions` on the left side of the screen
+- Click on the settings icon on the same line as the `Manage Your Extensions` header
+- Click `Install add-on from file`
+- Navigate to and select the packed .zip file
