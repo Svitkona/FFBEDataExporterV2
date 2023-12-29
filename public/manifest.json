@@ -6,7 +6,7 @@
     "icons": {
     },
     "background": {
-      "service_worker": "./static/js/background.js"
+      "scripts": ["./static/js/background.js"]
     },
     "action": {},
     "host_permissions": ["https://lapis340v-gndgr.gumi.sg/"],

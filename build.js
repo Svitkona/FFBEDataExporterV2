@@ -11,15 +11,21 @@ async function main() {
     }
   }
 
-  const output = fs.createWriteStream(`${__dirname}/out/ffbesyncv2.zip`);
+  const extensionOutput = fs.createWriteStream(
+    `${__dirname}/out/ffbesyncv2.zip`,
+  );
+  const extensionArchive = archiver('zip');
+  extensionArchive.directory(`${__dirname}/build/`, false);
+  extensionArchive.pipe(extensionOutput);
 
-  const archive = archiver('zip');
+  const srcOutput = fs.createWriteStream(`${__dirname}/out/src.zip`);
+  const srcArchive = archiver('zip');
+  srcArchive.directory(`${__dirname}/src/`, 'src');
+  srcArchive.directory(`${__dirname}/public/`, 'public');
+  srcArchive.glob('*.+(js|json|md|gitignore)', { cwd: __dirname });
+  srcArchive.pipe(srcOutput);
 
-  archive.directory(`${__dirname}/build/`, false);
-
-  archive.pipe(output);
-
-  await archive.finalize();
+  await Promise.all([extensionArchive.finalize(), srcArchive.finalize()]);
 }
 
 main();
