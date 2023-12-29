@@ -21,7 +21,7 @@ This Chrome/Firefox extension is for exporting your data from FFBE.
    ```
 
 2. Install NodeJS
-3. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension
+3. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension. It will also generate a zip file in `out` which can be uploaded to the Chrome/Firefox extension stores
 
 ### Installing the extension
 
