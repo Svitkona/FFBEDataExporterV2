@@ -18,6 +18,8 @@ async function main() {
   archive.directory(`${__dirname}/build/`, false);
 
   archive.pipe(output);
+
+  await archive.finalize();
 }
 
 main();
