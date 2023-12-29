@@ -23,16 +23,6 @@ This Chrome/Firefox extension is for exporting your data from FFBE.
 2. Install NodeJS
 3. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension
 
-### Creating an OAuth credential for Google
-
-- Navigate to `https://console.cloud.google.com/apis/`
-- Create a new project if needed
-- Click on `Credentials` on the left side of the screen
-- Click `CREATE CREDENTIALS` and select `OAuth client ID`
-- Select `Web application`
-- Click `Create`
-- Copy the Client ID and replace `client_id` in `src/background/index.ts` with the copied value
-
 ### Installing the extension
 
 Chrome:
@@ -50,4 +40,17 @@ Firefox:
 - Click `Extensions` on the left side of the screen
 - Click on the settings icon on the same line as the `Manage Your Extensions` header
 - Click `Install add-on from file`
-- Navigate to and select the packed .zip file
+- Navigate to and select the .cri file downlaoded from the Firefox addons portal
+
+### Creating an OAuth credential for Google
+
+When the extension is installed, it will log a redirect URL in the browser console. Take note of this URL, as it will be used later.
+
+- Navigate to `https://console.cloud.google.com/apis/`
+- Create a new project if needed
+- Click on `Credentials` on the left side of the screen
+- Click `CREATE CREDENTIALS` and select `OAuth client ID`
+- Select `Web application`
+- Click `Create`
+- Add the redirect URL under `Authorized redirect URIs`
+- Copy the Client ID and replace `client_id` in `src/background/index.ts` with the copied value
