@@ -1,16 +1,16 @@
 {
     "manifest_version": 3,
     "name": "FFBE Sync v2",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "FFBE Sync in React",
     "icons": {
     },
     "background": {
-      "scripts": ["./static/js/background.js"]
+      "service_worker": "./static/js/background.js"
     },
     "action": {},
     "host_permissions": ["https://lapis340v-gndgr.gumi.sg/"],
-    "permissions": ["storage", "identity"],
+    "permissions": ["storage", "identity", "https://lapis340v-gndgr.gumi.sg"],
     "browser_specific_settings": {
       "gecko": {
         "id": "ffbe-sync-v2@svitkona.xyz"

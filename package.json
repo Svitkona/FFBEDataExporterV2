@@ -21,7 +21,7 @@
     "webextension-polyfill": "^0.10.0"
   },
   "scripts": {
-    "build": "INLINE_RUNTIME_CHUNK=false react-app-rewired build"
+    "build": "INLINE_RUNTIME_CHUNK=false react-app-rewired build && node build.js"
   },
   "eslintConfig": {
     "extends": [
@@ -45,7 +45,9 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@types/crypto-js": "^4.2.1",
     "@types/webextension-polyfill": "^0.10.7",
+    "archiver": "^6.0.1",
     "customize-cra": "^1.0.0",
+    "npm": "^10.2.5",
     "react-app-rewired": "^2.2.1"
   }
 }
