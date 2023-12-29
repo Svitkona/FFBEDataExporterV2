@@ -1,12 +1,12 @@
 {
     "manifest_version": 3,
     "name": "FFBE Sync v2",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "FFBE Sync in React",
     "icons": {
     },
     "background": {
-      "service_worker": "./static/js/background.js"
+      "scripts": ["./static/js/background.js"]
     },
     "action": {},
     "host_permissions": ["https://lapis340v-gndgr.gumi.sg/"],
