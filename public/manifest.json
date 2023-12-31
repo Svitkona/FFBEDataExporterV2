@@ -15,7 +15,7 @@
     "https://v890-lapis.gumi.sg/*",
     "https://www.facebook.com/*"
   ],
-  "permissions": ["storage", "identity", "scripting"],
+  "permissions": ["identity", "scripting"],
   "browser_specific_settings": {
     "gecko": {
       "id": "ffbe-sync-v2@svitkona.xyz"
