@@ -1,6 +1,6 @@
-import CryptoJS from 'crypto-js';
 import Browser, { runtime } from 'webextension-polyfill';
-import ky from 'ky';
+import { InitializeRequest } from '../networking/InitializeRequest';
+import { UserInfoRequest } from '../networking/UserInfoRequest';
 
 runtime.onInstalled.addListener(() => {
   console.log('[background] loaded');
@@ -34,7 +34,6 @@ runtime.onMessage.addListener(async message => {
         url: authUrl,
         interactive: true,
       });
-      console.log(res);
 
       return {
         type: 'success',
@@ -46,6 +45,19 @@ runtime.onMessage.addListener(async message => {
         data: error,
       };
     }
+  } else if (message.type === 'facebookAuth') {
+    const fbTabId = message.data.tabId;
+
+    Browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (tabId === fbTabId && tab.status === 'complete') {
+        Browser.scripting.executeScript({
+          target: {
+            tabId,
+          },
+          files: ['/static/js/facebook.js'],
+        });
+      }
+    });
   } else if (message.type === 'startFfbeExport') {
     if (!message.data) {
       return {
@@ -57,7 +69,7 @@ runtime.onMessage.addListener(async message => {
     }
 
     const { accountId, oauthToken, isGoogle } = message.data;
-    if (!accountId || !oauthToken || !isGoogle) {
+    if (!accountId || !oauthToken || isGoogle === undefined) {
       return {
         type: 'error',
         data: {
@@ -71,69 +83,6 @@ runtime.onMessage.addListener(async message => {
     return res;
   }
 });
-
-function makeAuthenticationPayload(
-  accountId: string,
-  authToken: string,
-  isGoogle: boolean,
-  actionKey: string,
-) {
-  const payload = isGoogle
-    ? '{"LhVz6aD2":[{"6Nf5risL":"0","40w6brpQ":"0","jHstiL12":"0","io30YcLA":"Nexus 6P_android6.0","K1G4fBjF":"2","e8Si6TGh":"","1WKh6Xqe":"ver.2.7.0.1","64anJRhx":"2019-02-08 11:15:15","Y76dKryw":null,"6e4ik6kA":"","NggnPgQC":"","e5zgvyv7":"' +
-      authToken +
-      '","GwtMEDfU":"' +
-      accountId +
-      '"}],"Euv8cncS":[{"K2jzG6bp":"1"}],"c402FmRD":[{"kZdGGshD":"2"}],"c1qYg84Q":[{"a4hXTIm0":"F_APP_VERSION_AND","wM9AfX6I":"10000"},{"a4hXTIm0":"F_RSC_VERSION","wM9AfX6I":"0"},{"a4hXTIm0":"F_MST_VERSION","wM9AfX6I":"2047"}]}'
-    : '{"LhVz6aD2":[{"9Tbns0eI":null,"9qh17ZUf":null,"6Nf5risL":"0","io30YcLA":"Nexus 6P_android6.0","K1G4fBjF":"2","e8Si6TGh":"","U7CPaH9B":null,"1WKh6Xqe":"ver.2.7.0.1","64anJRhx":"2019-02-08 11:15:15","Y76dKryw":null,"6e4ik6kA":"","NggnPgQC":"","X6jT6zrQ":null,"DOFV3qRF":null,"P_FB_TOKEN":"' +
-      authToken +
-      '","P_FB_ID":"' +
-      accountId +
-      '"}],"Euv8cncS":[{"K2jzG6bp":"0"}],"c1qYg84Q":[{"a4hXTIm0":"F_APP_VERSION_IOS","wM9AfX6I":"10000"},{"a4hXTIm0":"F_RSC_VERSION","wM9AfX6I":"0"},{"a4hXTIm0":"F_MST_VERSION","wM9AfX6I":"377"}]}';
-
-  const encrypted = CryptoJS.AES.encrypt(
-    payload,
-    CryptoJS.enc.Utf8.parse(actionKey),
-    {
-      mode: CryptoJS.mode.ECB,
-      padding: CryptoJS.pad.Pkcs7,
-    },
-  );
-
-  return {
-    payload:
-      '{"TEAYk6R1":{"ytHoz4E2":"75527","z5hB3P01":"75fYdNxq"},"t7n6cVWf":{"qrVcDe48":"' +
-      encrypted.ciphertext.toString(CryptoJS.enc.Base64) +
-      '"}}',
-  };
-}
-
-async function callActionSymbol(
-  actionSymbol: string,
-  actionKey: string,
-  data: { payload: string },
-) {
-  const res = await ky
-    .post(
-      `https://lapis340v-gndgr.gumi.sg/lapisProd/app/php/gme/actionSymbol/${actionSymbol}.php`,
-      {
-        body: data.payload,
-      },
-    )
-    .json();
-
-  // TODO: check response and fix any
-  const encryptedPayloadBase64 = (res as any)['t7n6cVWf']['qrVcDe48'];
-
-  const decrypted = CryptoJS.AES.decrypt(
-    encryptedPayloadBase64.toString(),
-    CryptoJS.enc.Utf8.parse(actionKey),
-    { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 },
-  );
-
-  const obj = decrypted.toString(CryptoJS.enc.Utf8);
-
-  return JSON.parse(obj);
-}
 
 function makeLoginToken(
   accountId: string,
@@ -190,26 +139,56 @@ function makeLoginToken(
       ],
     });
   } else {
-    throw new Error('Unimplemented.');
+    return JSON.stringify({
+      LhVz6aD2: [
+        {
+          JC61TPqS: data['LhVz6aD2'][0]['JC61TPqS'],
+          m3Wghr1j: data['LhVz6aD2'][0]['m3Wghr1j'],
+          mESKDlqL: data['LhVz6aD2'][0]['mESKDlqL'],
+          iVN1HD3p: data['LhVz6aD2'][0]['iVN1HD3p'],
+          '9K0Pzcpd': '10000',
+          X6jT6zrQ: accountId,
+          '9Tbns0eI': data['LhVz6aD2'][0]['9Tbns0eI'],
+          '9qh17ZUf': data['LhVz6aD2'][0]['9qh17ZUf'],
+          '6Nf5risL': data['LhVz6aD2'][0]['6Nf5risL'],
+          io30YcLA: 'Nexus 6P_android6.0',
+          K1G4fBjF: '2',
+          e8Si6TGh: data['LhVz6aD2'][0]['e8Si6TGh'],
+          U7CPaH9B: data['LhVz6aD2'][0]['U7CPaH9B'],
+          '1WKh6Xqe': 'ver.2.7.0.1',
+          '64anJRhx': '2019-02-08 11:15:15',
+          Y76dKryw: null,
+          '6e4ik6kA': '',
+          NggnPgQC: '',
+          DOFV3qRF: authToken,
+        },
+      ],
+      QCcFB3h9: [
+        {
+          qrVcDe48: data['QCcFB3h9'][0]['qrVcDe48'],
+        },
+      ],
+      Euv8cncS: [
+        {
+          K2jzG6bp: '0',
+        },
+      ],
+      c1qYg84Q: [
+        {
+          a4hXTIm0: 'F_APP_VERSION_IOS',
+          wM9AfX6I: '10000',
+        },
+        {
+          a4hXTIm0: 'F_RSC_VERSION',
+          wM9AfX6I: '0',
+        },
+        {
+          a4hXTIm0: 'F_MST_VERSION',
+          wM9AfX6I: '10000',
+        },
+      ],
+    });
   }
-}
-
-function makeUserInfoPayload(
-  actionKey: string,
-  payloadKey: string,
-  loginToken: string,
-) {
-  const secondEncrypted = CryptoJS.AES.encrypt(
-    loginToken,
-    CryptoJS.enc.Utf8.parse(actionKey),
-    { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 },
-  );
-
-  const payload = `{"TEAYk6R1":{"ytHoz4E2":"75528","z5hB3P01":"${payloadKey}"},"t7n6cVWf":{"qrVcDe48":"${secondEncrypted.ciphertext.toString(
-    CryptoJS.enc.Base64,
-  )}"}}`;
-
-  return payload;
 }
 
 async function initateDataExport(
@@ -217,84 +196,68 @@ async function initateDataExport(
   oauthToken: string,
   isGoogle: boolean,
 ) {
-  const loginUrlSymbol = 'fSG1eXI9';
-  const loginKey = 'rVG09Xnt\0\0\0\0\0\0\0\0';
-
-  const userInfo1UrlSymbol = 'u7sHDCg4';
-  const userInfo1Key = 'rcsq2eG7\0\0\0\0\0\0\0\0';
-  const userInfo1PayloadKey = 'X07iYtp5';
-
-  const userInfo2UrlSymbol = '7KZ4Wvuw';
-  const userInfo2Key = '7VNRi6Dk\0\0\0\0\0\0\0\0';
-  const userInfo2PayloadKey = '2eK5Vkr8';
-
-  const userInfo3UrlSymbol = 'lZXr14iy';
-  const userInfo3Key = '0Dn4hbWC\0\0\0\0\0\0\0\0';
-  const userInfo3PayloadKey = '4rjw5pnv';
-
+  const start = new Date();
   try {
-    const initialAuthenticationPayload = makeAuthenticationPayload(
+    const initializeRequest = new InitializeRequest(
+      isGoogle,
       accountId,
       oauthToken,
-      isGoogle,
-      loginKey,
+      new Date().getMilliseconds() - start.getMilliseconds(),
     );
 
-    const initialAuthenticationRes = await callActionSymbol(
-      loginUrlSymbol,
-      loginKey,
-      initialAuthenticationPayload,
-    );
+    const initializeResponse = await initializeRequest.send();
 
     const loginToken = makeLoginToken(
       accountId,
       oauthToken,
       isGoogle,
-      initialAuthenticationRes,
+      initializeResponse,
     );
 
-    const userData1Payload = makeUserInfoPayload(
-      userInfo1Key,
-      userInfo1PayloadKey,
+    const userInfo1Request = UserInfoRequest.First(
+      isGoogle,
+      accountId,
+      oauthToken,
       loginToken,
+      new Date().getMilliseconds() - start.getMilliseconds(),
     );
 
-    const userData1 = await callActionSymbol(userInfo1UrlSymbol, userInfo1Key, {
-      payload: userData1Payload,
-    });
+    const userInfo1 = await userInfo1Request.send();
 
-    const userData2Payload = makeUserInfoPayload(
-      userInfo2Key,
-      userInfo2PayloadKey,
+    const userInfo2Request = UserInfoRequest.Second(
+      isGoogle,
+      accountId,
+      oauthToken,
       loginToken,
+      new Date().getMilliseconds() - start.getMilliseconds(),
     );
 
-    const userData2 = await callActionSymbol(userInfo2UrlSymbol, userInfo2Key, {
-      payload: userData2Payload,
-    });
+    const userInfo2 = await userInfo2Request.send();
 
-    const userData3Payload = makeUserInfoPayload(
-      userInfo3Key,
-      userInfo3PayloadKey,
+    const userInfo3Request = UserInfoRequest.Third(
+      isGoogle,
+      accountId,
+      oauthToken,
       loginToken,
+      new Date().getMilliseconds() - start.getMilliseconds(),
     );
 
-    const userData3 = await callActionSymbol(userInfo3UrlSymbol, userInfo3Key, {
-      payload: userData3Payload,
-    });
+    const userInfo3 = await userInfo3Request.send();
 
     return {
       type: 'success',
       data: {
-        userData1,
-        userData2,
-        userData3,
+        userInfo1,
+        userInfo2,
+        userInfo3,
       },
     };
   } catch (error) {
     return {
       type: 'error',
-      data: (error as Error).message,
+      data: {
+        message: (error as any).message,
+      },
     };
   }
 }

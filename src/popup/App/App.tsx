@@ -5,15 +5,6 @@ import Browser, { runtime } from 'webextension-polyfill';
 import { useState } from 'react';
 import ky from 'ky';
 
-enum State {
-  Initial,
-  GettingToken,
-  GotToken,
-  GettingData,
-  GotData,
-  Error,
-}
-
 function makeInventoryData({
   userData,
   userData3,
@@ -226,8 +217,18 @@ function exportDate() {
   return [year, month, day].join('-');
 }
 
+enum State {
+  Initial,
+  GettingToken,
+  GotToken,
+  GettingData,
+  GotData,
+  Error,
+}
+
 const App = () => {
   const [state, setState] = useState(State.Initial);
+  const [errorMesage, setErrorMessage] = useState('');
   const [oauthToken, setOauthToken] = useState('');
   const [isGoogle, setIsGoogle] = useState(true);
   const [accountId, setAccountId] = useState('');
@@ -244,6 +245,12 @@ const App = () => {
       const authRes = await Browser.runtime.sendMessage({
         type: 'googleAuth',
       });
+
+      if (authRes.type === 'error') {
+        setState(State.Error);
+        setErrorMessage(authRes.data.message);
+        return;
+      }
 
       console.log(`[popup] got res '${JSON.stringify(authRes)}'`);
 
@@ -279,7 +286,72 @@ const App = () => {
     }
   }
 
+  async function initiateFacebookConnection() {
+    setState(State.GettingToken);
+
+    setIsGoogle(false);
+
+    const tab = await Browser.tabs.create({
+      url: 'https://m.facebook.com/login.php?skip_api_login=1&api_key=1238083776220999&signed_next=1&next=https%3A%2F%2Fm.facebook.com%2Fv3.3%2Fdialog%2Foauth%3Fredirect_uri%3Dfbconnect%253A%252F%252Fsuccess%26display%3Dtouch%26state%3D%257B%25220_auth_logger_id%2522%253A%2522792e45db-e19b-4aec-9efa-767011b65d81%2522%252C%25223_method%2522%253A%2522web_view%2522%257D%26scope%3Duser_friends%26response_type%3Dtoken%252Csigned_request%26default_audience%3Dfriends%26return_scopes%3Dtrue%26auth_type%3Drerequest%26client_id%3D1238083776220999%26ret%3Dlogin%26sdk%3Dandroid-4.40.0%26logger_id%3D792e45db-e19b-4aec-9efa-767011b65d81&cancel_url=fbconnect%3A%2F%2Fsuccess%3Ferror%3Daccess_denied%26error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3Duser_denied%26state%3D%257B%25220_auth_logger_id%2522%253A%2522792e45db-e19b-4aec-9efa-767011b65d81%2522%252C%25223_method%2522%253A%2522web_view%2522%257D%26e2e%3D%257B%2522init%2522%253A1549652357497%257D&display=touch&locale=en_US&logger_id=792e45db-e19b-4aec-9efa-767011b65d81&_rdr',
+    });
+
+    Browser.runtime.sendMessage({
+      type: 'facebookAuth',
+      data: {
+        tabId: tab.id,
+      },
+    });
+
+    const listener = async (message: any) => {
+      if (message.type === 'facebookToken') {
+        console.log(`Got token (token=${message.data})`);
+
+        Browser.tabs.remove(tab.id!);
+
+        setState(State.GotToken);
+        setOauthToken(message.data);
+
+        try {
+          const userInfoRes = await ky
+            .get(
+              `https://graph.facebook.com/v18.0/me?fields=id%2Cname&access_token=${message.data}`,
+            )
+            .json();
+
+          // TODO: check response and fix any
+          const id: string = (userInfoRes as any).id;
+
+          console.log(`Got user info (id=${id})`);
+
+          setState(State.GotToken);
+
+          setAccountId(id);
+        } catch (error) {
+          setErrorMessage((error as Error).message);
+          setState(State.Error);
+        }
+      } else if (message.type === 'fbLoginCancelled') {
+        setState(State.Initial);
+      }
+    };
+
+    Browser.runtime.onMessage.addListener(listener);
+  }
+
   async function initiateDataExport() {
+    const permissionsRes = await Browser.permissions.request({
+      origins: [
+        'https://lapis340v-gndgr.gumi.sg/*',
+        'https://v890-lapis.gumi.sg/*',
+      ],
+    });
+
+    if (!permissionsRes) {
+      setErrorMessage('Please approve the requested permissions.');
+      setState(State.Error);
+      return;
+    }
+
     setState(State.GettingData);
 
     const res = await runtime.sendMessage({
@@ -291,14 +363,20 @@ const App = () => {
       },
     });
 
-    const { userData1, userData2, userData3 } = res.data;
+    if (res.type === 'error') {
+      setState(State.Error);
+      setErrorMessage(res.data.message);
+      return;
+    }
+
+    const { userInfo1, userInfo3 } = res.data;
 
     const inventoryData = makeInventoryData({
-      userData: userData1,
-      userData3,
+      userData: userInfo1,
+      userData3: userInfo3,
     });
-    const unitListData = makeUnitListData({ userData: userData1 });
-    const esperData = makeEsperData({ userData: userData1 });
+    const unitListData = makeUnitListData({ userData: userInfo1 });
+    const esperData = makeEsperData({ userData: userInfo1 });
 
     setData({
       inventoryData,
@@ -310,7 +388,7 @@ const App = () => {
   }
 
   return (
-    <div className="container p-3">
+    <div className="p-3">
       <div className="row">
         <div className="col">
           <h4>FFBE data exporter (Facebook/Google)</h4>
@@ -318,16 +396,17 @@ const App = () => {
       </div>
       {state === State.Initial && (
         <div className="row">
-          <div className="col">
+          <div className="col col-6">
             <button
               className="btn btn-primary me-3"
               onClick={initiateGoogleConnection}
             >
               Start Google based export
             </button>
-          </div>
-          <div className="col">
-            <button className="btn btn-primary">
+            <button
+              className="btn btn-primary"
+              onClick={initiateFacebookConnection}
+            >
               Start Facebook based export
             </button>
           </div>
@@ -357,9 +436,10 @@ const App = () => {
         <>
           <div className="row">
             <div className="col">An error occurred.</div>
+            <code>{errorMesage ?? 'An unknown error occurred.'}</code>
           </div>
           <div className="row">
-            <div className="col">
+            <div className="col col-1">
               <button
                 type="button"
                 className="btn btn-primary"
@@ -372,32 +452,55 @@ const App = () => {
         </>
       )}
       {state === State.GotData && (
-        <div className="d-flex flex-column">
-          <a
-            href={`data:text/plain;charset=utf-8,${encodeURIComponent(
-              JSON.stringify(data.inventoryData),
-            )}`}
-            download={`inventory_${dateString}.json`}
-          >
-            Download inventory data
-          </a>
-          <a
-            href={`data:text/plain;charset=utf-8,${encodeURIComponent(
-              JSON.stringify(data.unitListData),
-            )}`}
-            download={`units_${dateString}.json`}
-          >
-            Download unit data
-          </a>
-          <a
-            href={`data:text/plain;charset=utf-8,${encodeURIComponent(
-              JSON.stringify(data.esperData),
-            )}`}
-            download={`espers_${dateString}.json`}
-          >
-            Download esper data
-          </a>
-        </div>
+        <>
+          <div className="row">
+            <div className="col">
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(data.inventoryData),
+                )}`}
+                download={`inventory_${dateString}.json`}
+              >
+                Download inventory data
+              </a>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col">
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(data.unitListData),
+                )}`}
+                download={`units_${dateString}.json`}
+              >
+                Download unit data
+              </a>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col">
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(data.esperData),
+                )}`}
+                download={`espers_${dateString}.json`}
+              >
+                Download esper data
+              </a>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col col-1">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setState(State.Initial)}
+              >
+                Start over
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
