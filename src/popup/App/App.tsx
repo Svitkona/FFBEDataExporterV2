@@ -287,6 +287,20 @@ const App = () => {
   }
 
   async function initiateFacebookConnection() {
+    const permissionsRes = await Browser.permissions.request({
+      origins: [
+        'https://lapis340v-gndgr.gumi.sg/*',
+        'https://v890-lapis.gumi.sg/*',
+        'https://www.facebook.com/*',
+      ],
+    });
+
+    if (!permissionsRes) {
+      setErrorMessage('Please approve the requested permissions.');
+      setState(State.Error);
+      return;
+    }
+
     setState(State.GettingToken);
 
     setIsGoogle(false);
@@ -343,6 +357,7 @@ const App = () => {
       origins: [
         'https://lapis340v-gndgr.gumi.sg/*',
         'https://v890-lapis.gumi.sg/*',
+        'https://www.facebook.com/*',
       ],
     });
 

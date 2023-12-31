@@ -4,24 +4,8 @@ This Chrome/Firefox extension is for exporting your data from FFBE.
 
 ### Building
 
-1. First, decide whether you are targetting Chrome or Firefox. For Chrome, skip to step 2. For Firefox, the `manifest.json` file needs to be modified: replace
-
-   ```
-   "background": {
-     "service_worker": "./static/js/background.js"
-   },
-   ```
-
-   with
-
-   ```
-   "background": {
-     "scripts": ["./static/js/background.js"]
-   },
-   ```
-
-2. Install NodeJS
-3. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension. It will also generate a zip file in `out` which can be uploaded to the Chrome/Firefox extension stores
+1. Install NodeJS
+2. Run `npm install` and `npm build`. The build will create a new directory called `build` which will contain all the files needed to install the extension. It will also generate a zip file in `out` which can be uploaded to the Chrome/Firefox extension stores
 
 ### Installing the extension
 
@@ -31,10 +15,13 @@ Chrome:
 - Click `Load unpacked"
 - Navigate to and select the `build` directory
 
-Firefox:
+Firefox (as a temporary add-on):
+- Go to `about:debugging#/runtime/this-firefox`
+- Click `Load Temporary Add-On`
+- Navigate to and select the extension .zip
 
-- Pack the contents of the `build` directory into a .zip file
-- Sign the extension
+Firefox (permanently):
+- Sign the packed .zip extension
   - This is a fairly complicated step that is beyond the scope of this README. See https://extensionworkshop.com/documentation/publish/ for more information
 - Go to `about:addons`
 - Click `Extensions` on the left side of the screen
