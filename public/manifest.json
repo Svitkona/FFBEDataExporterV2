@@ -1,19 +1,22 @@
 {
-    "manifest_version": 3,
-    "name": "FFBE Sync v2",
-    "version": "1.0.3",
-    "description": "FFBE Sync in React",
-    "icons": {
-    },
-    "background": {
-      "scripts": ["./static/js/background.js"]
-    },
-    "action": {},
-    "host_permissions": ["https://lapis340v-gndgr.gumi.sg/"],
-    "permissions": ["storage", "identity", "https://lapis340v-gndgr.gumi.sg"],
-    "browser_specific_settings": {
-      "gecko": {
-        "id": "ffbe-sync-v2@svitkona.xyz"
-      }
+  "manifest_version": 3,
+  "name": "FFBE Sync v2",
+  "version": "1.1.0",
+  "description": "FFBE Sync v2",
+  "icons": {},
+  "background": {
+    "service_worker": "./static/js/background.js"
+  },
+  "action": {},
+  "host_permissions": [
+    "https://lapis340v-gndgr.gumi.sg/*",
+    "https://v890-lapis.gumi.sg/*",
+    "https://www.facebook.com/*"
+  ],
+  "permissions": ["storage", "identity", "scripting"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ffbe-sync-v2@svitkona.xyz"
     }
   }
+}
