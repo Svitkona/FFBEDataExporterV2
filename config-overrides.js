@@ -2,9 +2,10 @@ const { override } = require('customize-cra');
 
 const overrideEntry = config => {
   config.entry = {
-    main: './src/popup', // the extension UI
+    main: './src/popup',
     background: './src/background',
     content: './src/content',
+    facebook: './src/facebook.ts',
   };
 
   return config;
