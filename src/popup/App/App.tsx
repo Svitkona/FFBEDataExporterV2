@@ -73,6 +73,30 @@ function makeInventoryData({
   return ret;
 }
 
+function makeConsumablesData({ userData }: { userData: any /* TODO: fix */ }) {
+  let ret: { itemId: string; itemQty: string }[] = [];
+
+  let itemList = userData['4rC0aLkA'];
+
+  itemList.forEach((item: any /* TODO: fix */) => {
+    let itemCSV: string = item['HpL3FM4V'];
+    let array = itemCSV.split(',');
+
+    array.forEach(array => {
+      let itemId = array.split(':')[0];
+      let itemQty = array.split(':')[1];
+      let consumble = {
+        itemId,
+        itemQty,
+      };
+
+      ret.push(consumble);
+    });
+  });
+
+  return ret;
+}
+
 interface Unit {
   id: string;
   uniqueId: string;
@@ -107,7 +131,15 @@ interface Unit {
   stmrId?: string;
 }
 
-function makeUnitListData({ userData }: { userData: any }) {
+function makeUnitListData({
+  userData,
+  userData3,
+  fetchReserves,
+}: {
+  userData: any; // TODO fix
+  userData3: any; // TODO fix
+  fetchReserves: boolean;
+}) {
   const unitSublimiation: Record<string, string[]> = {};
 
   const subInfoList = userData['Duz1v8x9'];
@@ -124,7 +156,9 @@ function makeUnitListData({ userData }: { userData: any }) {
 
   const ret: Unit[] = [];
 
-  const unitList = userData['B71MekS8'];
+  const unitList = fetchReserves
+    ? userData['B71MekS8'].concat(userData3['6KWVR3Dw'])
+    : userData['B71MekS8'];
   unitList.forEach(function (unitToken: Record<string, string>) {
     const unitId = unitToken['3HriTp6B'];
     const unitUniqueId = unitToken['og2GHy49'];
@@ -193,18 +227,30 @@ function makeUnitListData({ userData }: { userData: any }) {
 }
 
 function makeEsperData({ userData }: { userData: any }) {
-  let ret: { id: string; rarity: number; level: number }[] = [];
+  const map: Record<
+    string,
+    { id: string; rarity: number; level: number; board?: any /* TODO: fix */ }
+  > = {};
 
-  userData['gP9TW2Bf'].forEach((e: any) => {
-    let esper = {
-      id: e['Iwfx42Wo'],
+  userData['gP9TW2Bf'].forEach((e: any /* TODO: fix */) => {
+    const id = e['Iwfx42Wo'];
+
+    const esper = {
+      id,
       rarity: parseInt(e['9fW0TePj']),
       level: parseInt(e['7wV3QZ80']),
     };
-    ret.push(esper);
+
+    map[id] = esper;
   });
 
-  return ret;
+  userData['1S8P2u9f'].forEach((e: any) => {
+    const id = e['Iwfx42Wo'];
+
+    map[id].board = e['E8WRi1bg'];
+  });
+
+  return Object.values(map);
 }
 
 function exportDate() {
@@ -233,6 +279,7 @@ const App = () => {
   const [isGoogle, setIsGoogle] = useState(true);
   const [accountId, setAccountId] = useState('');
   const [data, setData] = useState({} as Record<string, unknown>);
+  const [fetchReserves, setFetchReserves] = useState(false);
 
   const dateString = exportDate();
 
@@ -375,6 +422,7 @@ const App = () => {
         accountId,
         oauthToken,
         isGoogle,
+        fetchReserves,
       },
     });
 
@@ -390,13 +438,19 @@ const App = () => {
       userData: userInfo1,
       userData3: userInfo3,
     });
-    const unitListData = makeUnitListData({ userData: userInfo1 });
+    const unitListData = makeUnitListData({
+      userData: userInfo1,
+      userData3: userInfo3,
+      fetchReserves,
+    });
     const esperData = makeEsperData({ userData: userInfo1 });
+    const consumablesData = makeConsumablesData({ userData: userInfo1 });
 
     setData({
       inventoryData,
       unitListData,
       esperData,
+      consumablesData,
     });
 
     setState(State.GotData);
@@ -410,22 +464,39 @@ const App = () => {
         </div>
       </div>
       {state === State.Initial && (
-        <div className="row">
-          <div className="col col-6">
-            <button
-              className="btn btn-primary me-3"
-              onClick={initiateGoogleConnection}
-            >
-              Start Google based export
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={initiateFacebookConnection}
-            >
-              Start Facebook based export
-            </button>
+        <>
+          <div className="row">
+            <div className="col col-6">
+              <button
+                className="btn btn-primary me-3"
+                onClick={initiateGoogleConnection}
+              >
+                Start Google based export
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={initiateFacebookConnection}
+              >
+                Start Facebook based export
+              </button>
+            </div>
           </div>
-        </div>
+          <div className="row">
+            <div className="col">
+              <input
+                type="checkbox"
+                className="me-2"
+                id="fetch-reserves"
+                onChange={event =>
+                  setFetchReserves(event.target.value === 'on')
+                }
+              />
+              <label htmlFor="fetch-reserves">
+                Fetch reserves in units.json?
+              </label>
+            </div>
+          </div>
+        </>
       )}
       {(state === State.GettingToken || state === State.GettingData) && (
         <div className="row">
@@ -501,6 +572,18 @@ const App = () => {
                 download={`espers_${dateString}.json`}
               >
                 Download esper data
+              </a>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col">
+              <a
+                href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+                  JSON.stringify(data.consumablesData),
+                )}`}
+                download={`consumables_${dateString}.json`}
+              >
+                Download consumables data
               </a>
             </div>
           </div>
