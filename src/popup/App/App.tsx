@@ -353,7 +353,7 @@ const App = () => {
     setIsGoogle(false);
 
     const tab = await Browser.tabs.create({
-      url: 'https://m.facebook.com/login.php?skip_api_login=1&api_key=1238083776220999&signed_next=1&next=https%3A%2F%2Fm.facebook.com%2Fv3.3%2Fdialog%2Foauth%3Fredirect_uri%3Dfbconnect%253A%252F%252Fsuccess%26display%3Dtouch%26state%3D%257B%25220_auth_logger_id%2522%253A%2522792e45db-e19b-4aec-9efa-767011b65d81%2522%252C%25223_method%2522%253A%2522web_view%2522%257D%26scope%3Duser_friends%26response_type%3Dtoken%252Csigned_request%26default_audience%3Dfriends%26return_scopes%3Dtrue%26auth_type%3Drerequest%26client_id%3D1238083776220999%26ret%3Dlogin%26sdk%3Dandroid-4.40.0%26logger_id%3D792e45db-e19b-4aec-9efa-767011b65d81&cancel_url=fbconnect%3A%2F%2Fsuccess%3Ferror%3Daccess_denied%26error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3Duser_denied%26state%3D%257B%25220_auth_logger_id%2522%253A%2522792e45db-e19b-4aec-9efa-767011b65d81%2522%252C%25223_method%2522%253A%2522web_view%2522%257D%26e2e%3D%257B%2522init%2522%253A1549652357497%257D&display=touch&locale=en_US&logger_id=792e45db-e19b-4aec-9efa-767011b65d81&_rdr',
+      url: 'https://m.facebook.com/v3.3/dialog/oauth?redirect_uri=fbconnect%3A%2F%2Fsuccess&display=touch&state=%7B%220_auth_logger_id%22%3A%22792e45db-e19b-4aec-9efa-767011b65d81%22%2C%223_method%22%3A%22web_view%22%7D&scope=user_friends&response_type=token%2Csigned_request&default_audience=friends&return_scopes=true&auth_type=rerequest&client_id=1238083776220999&ret=login&sdk=android-4.40.0&logger_id=792e45db-e19b-4aec-9efa-767011b65d81',
     });
 
     Browser.runtime.sendMessage({
